@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Timelog</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <pre id="timer">00:00:00</pre>
+  <button id="start" onclick="start()">Старт</button>
+  <button id="stop" onclick="stop()" style="display: none;">Стоп</button>
+  <table id="table"></table>
+
+  <script>
+      var timer = null;
+      var storage = JSON.parse(localStorage.getItem("storage") ) ||
+                    {"tasks": []};
+      if (storage.tasks[0].endAt === null) {
+        timer = setInterval(function() {runTimer(storage.tasks[0])}, 1000);
+        document.querySelector('#start').style.display = 'none';
+        document.querySelector('#stop').style.display = 'block';
+      }
+
+      storage.tasks.forEach(function(task) {
+        var date = new Date(task.endAt - task.startAt);
+        var str = date.getUTCHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+
+        var tr = document.createElement('tr');
+        var title = document.createElement('td');
+        title.innerText = task.title;
+        tr.appendChild(title);
+        var time = document.createElement('td');
+        time.innerText = str;
+        tr.appendChild(time);
+        document.querySelector('#table').appendChild(tr);
+      });
+
+      function runTimer(task) {
+        var date = new Date(Date.now() - new Date(task.startAt));
+        var str = date.getUTCHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+        document.querySelector('#timer').innerHTML = str;
+      }
+
+      function start() {
+        var task = {
+          title: prompt("Что делаем?"),
+          startAt: Date.now(),
+          endAt: null
+        };
+        storage.tasks.unshift(task);
+        localStorage.setItem("storage", JSON.stringify(storage));
+      }
+
+      function stop() {
+        clearInterval(timer);
+        var task = storage.tasks[0];
+        task.endAt = Date.now();
+        localStorage.setItem("storage", JSON.stringify(storage));
+        document.querySelector('#stop').style.display = 'none';
+        document.querySelector('#start').style.display = 'block';
+        document.querySelector('#timer').innerHTML = '00:00:00';
+      }
+    </script>
+</body>
+</html>
