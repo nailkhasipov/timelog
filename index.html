@@ -14,11 +14,18 @@
   </style>
 </head>
 <body>
-  <span id="current"></span>
-  <pre id="timer">00:00:00</pre>
-  <button id="start" onclick="start()">Старт</button>
-  <button id="stop" onclick="stop()" style="display: none;">Стоп</button>
-  <table id="table"></table>
+  <table id="table">
+    <tr>
+      <td>
+        <input type="text" id='input'>
+      </td>
+      <td id="timer">00:00:00</td>
+      <td>
+        <button id="start" onclick="start()">Старт</button>
+        <button id="stop" onclick="stop()" style="display: none;">Стоп</button>
+      </td>
+    </tr>
+  </table>
 
   <script>
       let current, timer;
@@ -27,7 +34,8 @@
 
       if (storage.tasks[0].endAt === null) {
         current = storage.tasks[0];
-        timer = setInterval(function() {runTimer()}, 300);
+        document.querySelector('#input').value = current.title;
+        timer = setInterval(function() {runTimer()}, 1000);
         document.querySelector('#start').style.display = 'none';
         document.querySelector('#stop').style.display = 'block';
       }
@@ -37,12 +45,12 @@
       function runTimer() {
         let date = new Date(Date.now() - new Date(current.startAt));
         let str = drawTimer(date);
-        document.querySelector('#timer').innerHTML = str;
+        document.querySelector('#timer').innerText = str;
       }
 
       function start() {
         let task = {
-          title: prompt("Что делаем?"),
+          title: document.querySelector('input').value,
           startAt: Date.now(),
           endAt: null
         };
@@ -50,7 +58,6 @@
         localStorage.setItem("storage", JSON.stringify(storage));
         document.querySelector('#start').style.display = 'none';
         document.querySelector('#stop').style.display = 'block';
-        document.querySelector('#current').innerText = task.title;
 
         current = storage.tasks[0];
         timer = setInterval(function() {runTimer()}, 300);
@@ -64,8 +71,8 @@
         document.querySelector('#stop').style.display = 'none';
         document.querySelector('#start').style.display = 'block';
         document.querySelector('#timer').innerHTML = '00:00:00';
-        document.querySelector('#current').innerText = '';
-        document.querySelector('#table').prepend(buildRow(task));
+        document.querySelector('#input').value = '';
+        buildRow(task, 1);
       }
 
       function paddle(number, length) {
@@ -85,11 +92,16 @@
         localStorage.setItem("storage", JSON.stringify(storage));
       }
 
-      function buildRow(task) {
+      function buildRow(task, index) {
+        let tr;
         let date = new Date(task.endAt - task.startAt);
         let str = drawTimer(date);
 
-        let tr = document.createElement('tr');
+        if (index) {
+          tr = document.querySelector('#table').insertRow(index);
+        } else {
+          tr = document.createElement('tr');
+        }
 
         let title = document.createElement('td');
         title.innerText = task.title;
@@ -100,7 +112,7 @@
         tr.appendChild(time);
 
         let deleteButton = document.createElement('button');
-        deleteButton.appendChild(document.createTextNode("x"));
+        deleteButton.appendChild(document.createTextNode("Удалить"));
         deleteButton.onclick = function() {
           document.querySelector('#table').removeChild(tr);
           deleteTask(task, tr);
