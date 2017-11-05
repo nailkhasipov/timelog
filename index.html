@@ -14,59 +14,107 @@
   </style>
 </head>
 <body>
+  <span id="current"></span>
   <pre id="timer">00:00:00</pre>
   <button id="start" onclick="start()">Старт</button>
   <button id="stop" onclick="stop()" style="display: none;">Стоп</button>
   <table id="table"></table>
 
   <script>
-      var timer = null;
-      var storage = JSON.parse(localStorage.getItem("storage") ) ||
+      let current, timer;
+      let storage = JSON.parse(localStorage.getItem("storage") ) ||
                     {"tasks": []};
+
       if (storage.tasks[0].endAt === null) {
-        timer = setInterval(function() {runTimer(storage.tasks[0])}, 1000);
+        current = storage.tasks[0];
+        timer = setInterval(function() {runTimer()}, 300);
         document.querySelector('#start').style.display = 'none';
         document.querySelector('#stop').style.display = 'block';
       }
 
-      storage.tasks.forEach(function(task) {
-        var date = new Date(task.endAt - task.startAt);
-        var str = date.getUTCHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+      buildTable();
 
-        var tr = document.createElement('tr');
-        var title = document.createElement('td');
-        title.innerText = task.title;
-        tr.appendChild(title);
-        var time = document.createElement('td');
-        time.innerText = str;
-        tr.appendChild(time);
-        document.querySelector('#table').appendChild(tr);
-      });
-
-      function runTimer(task) {
-        var date = new Date(Date.now() - new Date(task.startAt));
-        var str = date.getUTCHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+      function runTimer() {
+        let date = new Date(Date.now() - new Date(current.startAt));
+        let str = drawTimer(date);
         document.querySelector('#timer').innerHTML = str;
       }
 
       function start() {
-        var task = {
+        let task = {
           title: prompt("Что делаем?"),
           startAt: Date.now(),
           endAt: null
         };
         storage.tasks.unshift(task);
         localStorage.setItem("storage", JSON.stringify(storage));
+        document.querySelector('#start').style.display = 'none';
+        document.querySelector('#stop').style.display = 'block';
+        document.querySelector('#current').innerText = task.title;
+
+        current = storage.tasks[0];
+        timer = setInterval(function() {runTimer()}, 300);
       }
 
       function stop() {
         clearInterval(timer);
-        var task = storage.tasks[0];
+        let task = storage.tasks[0];
         task.endAt = Date.now();
         localStorage.setItem("storage", JSON.stringify(storage));
         document.querySelector('#stop').style.display = 'none';
         document.querySelector('#start').style.display = 'block';
         document.querySelector('#timer').innerHTML = '00:00:00';
+        document.querySelector('#current').innerText = '';
+        document.querySelector('#table').prepend(buildRow(task));
+      }
+
+      function paddle(number, length) {
+        while (String(number).length < length) {
+          number = '0' + number;
+        }
+        return number;
+      }
+
+      function drawTimer(date) {
+        return paddle(date.getUTCHours(), 2) + ':' + paddle(date.getMinutes(), 2) + ':' + paddle(date.getSeconds(), 2);
+      }
+
+      function deleteTask(task) {
+        var index = storage.tasks.findIndex(function(item) {return item.startAt === task.startAt});
+        storage.tasks.splice(index, 1);
+        localStorage.setItem("storage", JSON.stringify(storage));
+      }
+
+      function buildRow(task) {
+        let date = new Date(task.endAt - task.startAt);
+        let str = drawTimer(date);
+
+        let tr = document.createElement('tr');
+
+        let title = document.createElement('td');
+        title.innerText = task.title;
+        tr.appendChild(title);
+
+        let time = document.createElement('td');
+        time.innerText = str;
+        tr.appendChild(time);
+
+        let deleteButton = document.createElement('button');
+        deleteButton.appendChild(document.createTextNode("x"));
+        deleteButton.onclick = function() {
+          document.querySelector('#table').removeChild(tr);
+          deleteTask(task, tr);
+        }
+        tr.appendChild(deleteButton);
+        
+        return tr;
+      }
+
+      function buildTable() {
+        storage.tasks.forEach(function(task) {
+          if (task.endAt === null) return;
+          document.querySelector('#table').appendChild(buildRow(task));
+        });
       }
     </script>
 </body>
