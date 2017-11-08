@@ -12,41 +12,91 @@
       margin: 0;
     }
     body {
-      padding: 10px;
+      padding-top: 10px;
       color: #333;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
+
     h3 {
-      font-weight: 300;
-      text-align: center;
+      margin-left: 15px;
       margin-bottom: 10px;
+      font-size: 24px;
+      line-height: 1.05;
+      font-weight: 500;
+      letter-spacing: 0.008em;
     }
     .timer {
-      font-size: 2em;
-      font-family: monospace;
       text-align: center;
     }
     input {
       font-size:16px;
+      border: none;
+      outline: none;
+      width: 75%;
     }
     table {
       width: 100%;
+    }
+    ul.current {
+      margin-left: 15px;
+      border-top: 1px solid #eee;
+      list-style: none;
+    }
+
+    ul.current li {
+      display: flex;
+      line-height: 40px;
+      border-bottom: 1px solid #eee;
+    }
+
+    ul.current li .buttons {
+      width: 5%;
+    }
+
+    ul.list {
+      margin-left: 15px;
+      list-style: none;
+    }
+
+    ul.list li {
+      min-height: 40px;
+      line-height: 40px;
+      border-bottom: 1px solid #eee;
+    }
+
+    ul.list li .title {
+      display: inline-block;
+      width: 80%;
     }
   </style>
 </head>
 <body>
   <h3>Учёт времени</h3>
-  <table width="320px" id="table">
-    <tr>
-      <td>
-        <input type="text" id='input'>
-      </td>
-      <td id="timer">00:00:00</td>
-      <td>
-        <button id="start" onclick="start()">Старт</button>
-        <button id="stop" onclick="stop()" style="display: none;">Стоп</button>
-      </td>
-    </tr>
-  </table>
+  <ul class="current">
+    <li>️
+      <div class="buttons">
+        <button id="start" onclick="start()">▶️</button>
+        <button id="stop" onclick="stop()" style="display: none;">⏹</button>
+      </div>
+      <input type="text" id='input'>
+      <span id="timer">00:00</span>
+    </li>
+  </ul>
+  
+  <ul id="list" class="list">
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li></li>
+  </ul>
 
   <script>
       let current, timer;
@@ -91,7 +141,7 @@
         localStorage.setItem("storage", JSON.stringify(storage));
         document.querySelector('#stop').style.display = 'none';
         document.querySelector('#start').style.display = 'block';
-        document.querySelector('#timer').innerHTML = '00:00:00';
+        document.querySelector('#timer').innerHTML = '00:00';
         document.querySelector('#input').value = '';
         buildRow(task, 1);
       }
@@ -104,7 +154,7 @@
       }
 
       function drawTimer(date) {
-        return paddle(date.getUTCHours(), 2) + ':' + paddle(date.getMinutes(), 2) + ':' + paddle(date.getSeconds(), 2);
+        return paddle(date.getMinutes(), 2) + ':' + paddle(date.getSeconds(), 2);
       }
 
       function deleteTask(task) {
@@ -114,39 +164,16 @@
       }
 
       function buildRow(task, index) {
-        let tr;
-        let date = new Date(task.endAt - task.startAt);
-        let str = drawTimer(date);
-
-        if (index) {
-          tr = document.querySelector('#table').insertRow(index);
-        } else {
-          tr = document.createElement('tr');
-        }
-
-        let title = document.createElement('td');
-        title.innerText = task.title;
-        tr.appendChild(title);
-
-        let time = document.createElement('td');
-        time.innerText = str;
-        tr.appendChild(time);
-
-        let deleteButton = document.createElement('button');
-        deleteButton.appendChild(document.createTextNode("Удалить"));
-        deleteButton.onclick = function() {
-          document.querySelector('#table').removeChild(tr);
-          deleteTask(task, tr);
-        }
-        tr.appendChild(deleteButton);
-        
-        return tr;
+        let li = document.createElement('li');
+        li.innerHTML = '<span class="title">' + task.title + '</span>' + 
+                       '<span>' + drawTimer(new Date(task.endAt - task.startAt)) + '</span>';
+        return li;
       }
 
       function buildTable() {
         storage.tasks.forEach(function(task) {
           if (task.endAt === null) return;
-          document.querySelector('#table').appendChild(buildRow(task));
+          document.querySelector('#list').prepend(buildRow(task));
         });
       }
     </script>
